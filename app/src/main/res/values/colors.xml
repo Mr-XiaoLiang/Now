@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#58B5AD</color>
+    <color name="colorPrimaryVariant">#448A84</color>
+    <color name="colorOnPrimary">#FFFFFFFF</color>
+    <color name="colorSecondary">#FA7777</color>
+    <color name="colorSecondaryVariant">#F15E5E</color>
+    <color name="colorOnSecondary">#FFFFFFFF</color>
+
+    <color name="toolbarIcon">#FFFFFF</color>
+    <color name="toolbarTitle">#FFFFFF</color>
+    <color name="fabIcon">#FFFFFF</color>
+    <color name="fabText">#FFFFFF</color>
+    <color name="textPrimary">#333333</color>
+    <color name="textSecondary">#555555</color>
+    <color name="dialogBackground">#8000</color>
+    <color name="dialogForeground">#FFF</color>
+    <color name="itemBackground">#FFF</color>
+    <color name="floatingBackground">#3E000000</color>
+    <color name="floatingText">#FFF</color>
+</resources>

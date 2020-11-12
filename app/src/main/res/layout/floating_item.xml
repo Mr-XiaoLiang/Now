@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:padding="5dp"
+    android:gravity="center"
+    android:background="@drawable/bg_floating_group">
+
+    <TextView
+        android:id="@+id/iconView"
+        android:layout_width="wrap_content"
+        android:layout_height="24dp"
+        android:maxWidth="48dp"
+        android:minWidth="24dp"
+        android:background="@drawable/bg_floating_icon"
+        android:textSize="14sp"
+        android:text="@string/app_name"
+        android:maxLength="2"
+        android:gravity="center"
+        android:textColor="@color/colorSecondary"
+        android:paddingLeft="5dp"
+        android:paddingRight="5dp"/>
+
+    <TextView
+        android:id="@+id/timeView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="16sp"
+        android:text="12:34:56.789"
+        android:textColor="@color/floatingText"
+        android:layout_marginLeft="5dp"/>
+
+</LinearLayout>
