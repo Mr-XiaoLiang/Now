@@ -1,4 +1,4 @@
-package com.lollipop.now.ui
+package com.lollipop.now.activity
 
 import android.os.Bundle
 import android.view.Menu
@@ -11,6 +11,8 @@ import com.lollipop.now.data.SiteInfo
 import com.lollipop.now.list.DirectionInfo
 import com.lollipop.now.list.ListTouchHelper
 import com.lollipop.now.service.FloatingService
+import com.lollipop.now.ui.EditDialog
+import com.lollipop.now.ui.SiteAdapter
 import com.lollipop.now.util.doAsync
 import com.lollipop.now.util.onUI
 import com.lollipop.now.util.setMargin

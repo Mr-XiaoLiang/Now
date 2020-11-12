@@ -1,4 +1,4 @@
-package com.lollipop.now.ui
+package com.lollipop.now.activity
 
 import android.graphics.Color
 import android.os.Build

@@ -1,4 +1,4 @@
-package com.lollipop.now.ui
+package com.lollipop.now.activity
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
