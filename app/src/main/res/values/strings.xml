@@ -15,4 +15,12 @@
     <string name="disable_site">停用站点</string>
     <string name="net_delay">包含网络延迟</string>
     <string name="sync_error">同步失败</string>
+    <string name="site_info">站点信息</string>
+    <string name="default_site">默认站点</string>
+    <string name="parse">解析</string>
+    <string name="import_site">导入站点</string>
+    <string name="parse_error">解析站点信息失败</string>
+    <string name="share">分享</string>
+    <string name="copy_done">站点信息已复制到剪切板</string>
+    <string name="import_done">已导入</string>
 </resources>

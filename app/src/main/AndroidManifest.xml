@@ -14,7 +14,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Now">
-        <activity android:name=".activity.CopyActivity"></activity>
+        <activity android:name=".activity.CopyActivity"
+            android:label="@string/import_site"/>
 
         <service
             android:name=".service.FloatingService"

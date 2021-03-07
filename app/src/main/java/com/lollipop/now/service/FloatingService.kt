@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.BitmapFactory
+import android.graphics.Typeface
 import android.net.Uri
 import android.os.Build
 import android.os.IBinder
@@ -285,7 +286,9 @@ class FloatingService : Service() {
             R.layout.floating_item, null)
 
         private val iconView: TextView = view.findViewById(R.id.iconView)
-        private val timeView: TextView = view.findViewById(R.id.timeView)
+        private val timeView: TextView = view.findViewById<TextView>(R.id.timeView).apply {
+            typeface = Typeface.createFromAsset(context.assets, "DroidSansMono.ttf")
+        }
 
         val localOffset = TimeZone.getDefault().rawOffset
 
@@ -316,7 +319,7 @@ class FloatingService : Service() {
         private fun getTime(): String {
             val offset = offsetInfo?.offset ?: 0L
             if (offset == SiteHelper.OFFSET_ERROR) {
-                return context.getString(R.string.sync_error)
+                return timeView.resources.getString(R.string.sync_error)
             }
             val now = System.currentTimeMillis() + offset + localOffset
             val inDay = now % DAY

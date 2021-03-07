@@ -7,4 +7,9 @@
         app:showAsAction="always"
         android:title="@string/add"/>
 
+    <item android:id="@+id/copyItem"
+        android:icon="@drawable/ic_baseline_content_copy_24"
+        app:showAsAction="ifRoom"
+        android:title="@string/import_site"/>
+
 </menu>

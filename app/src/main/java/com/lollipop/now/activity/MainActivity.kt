@@ -1,5 +1,6 @@
 package com.lollipop.now.activity
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -70,6 +71,10 @@ class MainActivity : BaseActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == R.id.addItem) {
             addItem()
+            return true
+        }
+        if (item.itemId == R.id.copyItem) {
+            startActivity(Intent(this, CopyActivity::class.java))
             return true
         }
         return super.onOptionsItemSelected(item)

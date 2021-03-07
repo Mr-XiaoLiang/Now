@@ -76,6 +76,49 @@ class SiteHelper {
             }
             return HTTPS + url
         }
+
+        fun readDefaultInfo(context: Context): String {
+            if (DEFAULT_SITE_INFO.isBlank()) {
+                val open = context.assets.open("default.json")
+                val out = ByteArrayOutputStream()
+                val buffer = ByteArray(1024)
+                var length = open.read(buffer)
+                while (length >= 0) {
+                    out.write(buffer, 0, length)
+                    length = open.read(buffer)
+                }
+                DEFAULT_SITE_INFO = out.toString(Charsets.UTF_8.displayName())
+                DEFAULT_SITE_INFO = encode(DEFAULT_SITE_INFO)
+            }
+            return DEFAULT_SITE_INFO
+        }
+
+        fun stringToSiteList(value: String, list: ArrayList<SiteInfo>) {
+            list.clear()
+            val jsonArray = JSONArray(decode(value))
+            for (index in 0 until jsonArray.length()) {
+                val obj = jsonArray.optJSONObject(index) ?: continue
+                val name = obj.optString(KEY_NAME)?:""
+                val site = obj.optString(KEY_SITE)?:""
+                list.add(SiteInfo(name, site))
+            }
+        }
+
+        fun siteListToString(list: ArrayList<SiteInfo>): String {
+            val jsonArray = JSONArray()
+            for (info in list) {
+                val obj = JSONObject()
+                obj.put(KEY_NAME, info.name)
+                obj.put(KEY_SITE, info.url)
+                jsonArray.put(obj)
+            }
+            return encode(jsonArray.toString())
+        }
+
+        fun getSiteInfo(context: Context): String {
+            return context[KEY_SITE_INFO, ""]
+        }
+
     }
 
     private var context: Context? = null
@@ -191,32 +234,6 @@ class SiteHelper {
             return disableSiteList.size
         }
 
-    private fun siteListToString(list: ArrayList<SiteInfo>): String {
-        val jsonArray = JSONArray()
-        for (info in list) {
-            val obj = JSONObject()
-            obj.put(KEY_NAME, info.name)
-            obj.put(KEY_SITE, info.url)
-            jsonArray.put(obj)
-        }
-        return encode(jsonArray.toString())
-    }
-
-    private fun stringToSiteList(value: String, list: ArrayList<SiteInfo>) {
-        list.clear()
-        try {
-            val jsonArray = JSONArray(decode(value))
-            for (index in 0 until jsonArray.length()) {
-                val obj = jsonArray.optJSONObject(index) ?: continue
-                val name = obj.optString(KEY_NAME)?:""
-                val site = obj.optString(KEY_SITE)?:""
-                list.add(SiteInfo(name, site))
-            }
-        } catch (e: Throwable) {
-            e.printStackTrace()
-        }
-    }
-
     fun getSite(index: Int): SiteInfo {
         if (siteList.isEmpty() || index < 0 || index >= siteList.size) {
             return EMPTY_SITE
@@ -243,7 +260,7 @@ class SiteHelper {
         siteList.clear()
         isUseNetDelay = isNetDelay(context)
         try {
-            var value = context[KEY_SITE_INFO, ""]
+            var value = getSiteInfo(context)
             if (value.isBlank()) {
                 value = readDefaultInfo(context)
             }
@@ -259,6 +276,11 @@ class SiteHelper {
         } catch (e: Throwable) {
             e.printStackTrace()
         }
+    }
+
+    fun add(infoListL: List<SiteInfo>) {
+        siteList.addAll(infoListL)
+        applyChange()
     }
 
     fun add(index: Int, siteInfo: SiteInfo) {
@@ -329,22 +351,6 @@ class SiteHelper {
         context = null
         CommonUtil.remove(applyChangeTask)
         applyLock = true
-    }
-
-    fun readDefaultInfo(context: Context): String {
-        if (DEFAULT_SITE_INFO.isBlank()) {
-            val open = context.assets.open("default.json")
-            val out = ByteArrayOutputStream()
-            val buffer = ByteArray(1024)
-            var length = open.read(buffer)
-            while (length >= 0) {
-                out.write(buffer, 0, length)
-                length = open.read(buffer)
-            }
-            DEFAULT_SITE_INFO = out.toString(Charsets.UTF_8.displayName())
-            DEFAULT_SITE_INFO = encode(DEFAULT_SITE_INFO)
-        }
-        return DEFAULT_SITE_INFO
     }
 
 }

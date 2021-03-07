@@ -2,4 +2,5 @@
 <resources>
     <dimen name="fab_margin">16dp</dimen>
     <dimen name="cardRadius">10dp</dimen>
+    <dimen name="cardElevation">6dp</dimen>
 </resources>

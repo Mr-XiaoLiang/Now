@@ -21,9 +21,9 @@ open class BaseActivity: AppCompatActivity() {
         var viewFlag = (View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                 or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                 or View.SYSTEM_UI_FLAG_LAYOUT_STABLE)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            viewFlag = (viewFlag or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR)
-        }
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//            viewFlag = (viewFlag or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR)
+//        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             viewFlag = (viewFlag or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR)
         }
