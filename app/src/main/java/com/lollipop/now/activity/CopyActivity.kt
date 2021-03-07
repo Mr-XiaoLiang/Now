@@ -75,6 +75,7 @@ class CopyActivity : BaseActivity() {
                 selectedList.clear()
                 selectedList.addAll(siteList)
             }
+            onSelectedSiteChange()
             siteAdapter.notifyDataSetChanged()
         }
         importBtn.setOnClickListener {
@@ -96,12 +97,16 @@ class CopyActivity : BaseActivity() {
         if (!selectedList.remove(siteInfo)) {
             selectedList.add(siteInfo)
         }
+        onSelectedSiteChange()
+        siteAdapter.notifyItemChanged(position)
+    }
+
+    private fun onSelectedSiteChange() {
         importBtn.visibility = if (selectedList.isEmpty()) {
             View.INVISIBLE
         } else {
             View.VISIBLE
         }
-        siteAdapter.notifyItemChanged(position)
     }
 
     private fun parseInfo() {
@@ -197,11 +202,7 @@ class CopyActivity : BaseActivity() {
                 }
             }
         }
-        importBtn.visibility = if (selectedList.isEmpty()) {
-            View.INVISIBLE
-        } else {
-            View.VISIBLE
-        }
+        onSelectedSiteChange()
     }
 
     override fun onWindowInsetsChange(left: Int, top: Int, right: Int, bottom: Int) {

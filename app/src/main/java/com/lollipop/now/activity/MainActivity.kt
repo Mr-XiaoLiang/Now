@@ -55,6 +55,10 @@ class MainActivity : BaseActivity() {
             SiteHelper.enableNetDelay(this, isChecked)
         }
 
+    }
+
+    override fun onResume() {
+        super.onResume()
         doAsync {
             siteHelper.read(this)
             onUI {

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#7FAEAA</color>
+    <color name="colorPrimaryVariant">#658582</color>
+    <color name="colorOnPrimary">#FF000000</color>
+    <color name="colorSecondary">#B85959</color>
+    <color name="colorSecondaryVariant">#9F3F3F</color>
+    <color name="colorOnSecondary">#FF000000</color>
+    <color name="colorOnHeader">#A3A3A3</color>
+    <color name="windowBackground">#000000</color>
+    <color name="headerBackground">#000000</color>
+
+    <color name="toolbarIcon">#A3A3A3</color>
+    <color name="toolbarTitle">#A3A3A3</color>
+    <color name="fabIcon">#000000</color>
+    <color name="fabText">#000000</color>
+    <color name="textPrimary">#A3A3A3</color>
+    <color name="textSecondary">#A3A3A3</color>
+    <color name="dialogBackground">#8000</color>
+    <color name="dialogForeground">#505050</color>
+    <color name="itemBackground">#000000</color>
+    <color name="itemIntervalBackground">#373737</color>
+    <color name="floatingBackground">#3E000000</color>
+    <color name="floatingText">#A3A3A3</color>
+    <color name="cardBackground">#505050</color>
+
+    <color name="siteSelected">#4E4545</color>
+</resources>

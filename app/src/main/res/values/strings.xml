@@ -13,7 +13,7 @@
     <string name="notifi_title_no_alert">启动悬浮窗失败</string>
     <string name="notifi_msg_no_alert">点击通知进入悬浮窗权限设置</string>
     <string name="disable_site">停用站点</string>
-    <string name="net_delay">包含网络延迟</string>
+    <string name="net_delay">补偿网络延迟</string>
     <string name="sync_error">同步失败</string>
     <string name="site_info">站点信息</string>
     <string name="default_site">默认站点</string>

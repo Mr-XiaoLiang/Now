@@ -29,7 +29,7 @@ class SiteIntervalHolder private constructor(view: View): RecyclerView.ViewHolde
     }
 
     override fun canMove(): DirectionInfo {
-        return DirectionInfo.NONE
+        return DirectionInfo.VERTICAL
     }
 
 }

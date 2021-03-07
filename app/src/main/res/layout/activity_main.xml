@@ -11,7 +11,8 @@
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:theme="@style/AppTheme.Toolbar">
+        android:theme="@style/AppTheme.Toolbar"
+        android:background="@color/headerBackground">
 
         <com.google.android.material.appbar.CollapsingToolbarLayout
             android:id="@+id/collapsingToolbarLayout"
@@ -39,7 +40,7 @@
                     android:id="@+id/netDelaySwitch"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/colorOnPrimary"
+                    android:textColor="@color/colorOnHeader"
                     android:layout_gravity="bottom|end"
                     android:text="@string/net_delay"/>
 

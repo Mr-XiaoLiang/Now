@@ -6,6 +6,9 @@
     <color name="colorSecondary">#FA7777</color>
     <color name="colorSecondaryVariant">#F15E5E</color>
     <color name="colorOnSecondary">#FFFFFFFF</color>
+    <color name="colorOnHeader">#FFFFFFFF</color>
+    <color name="windowBackground">#FFFFFFFF</color>
+    <color name="headerBackground">#58B5AD</color>
 
     <color name="toolbarIcon">#FFFFFF</color>
     <color name="toolbarTitle">#FFFFFF</color>
@@ -16,6 +19,7 @@
     <color name="dialogBackground">#8000</color>
     <color name="dialogForeground">#FFF</color>
     <color name="itemBackground">#FFF</color>
+    <color name="itemIntervalBackground">#DDD</color>
     <color name="floatingBackground">#3E000000</color>
     <color name="floatingText">#FFF</color>
     <color name="cardBackground">#FFF</color>
