@@ -6,6 +6,7 @@
     <string name="hint_url">Website address</string>
     <string name="complete">OK</string>
     <string name="cancel">Cancel</string>
+    <string name="remember">Remember</string>
     <string name="floating_channel_name">Now`s App foreground Services</string>
     <string name="close_floating">Close</string>
     <string name="floating_notif_title">Now</string>
@@ -21,6 +22,9 @@
     <string name="import_site">Import</string>
     <string name="parse_error">Failed to parse site information</string>
     <string name="share">Share</string>
+    <string name="help">Help</string>
     <string name="copy_done">Site information has been copied to the clipboard</string>
     <string name="import_done">Has been imported</string>
+    <string name="hint_title_permission">Tips</string>
+    <string name="hint_message_permission">Hello, this software is only adapted for Android native standard API. \nIf you are using a deeply customized Android system such as ColorOS, MIUI, FuntouchOS, OneUI, OriginOS, JoyUI, FlymeOS, SmartisanOS,\n or a self-developed system such as HarmonyOS, BlackBerryOS, AliOS that is compatible with Android. \nThen please manually check whether the notification permission and floating window permission of the application etc. are open. \nIf the notification permission is turned off, then you may not see some necessary prompt information (this software promises not to contain any form of advertisement). \nIf you turn off the floating window permission, you will not be able to use the floating window time display function of this software, which may cause trouble to your use.\n(from Google Translate)</string>
 </resources>

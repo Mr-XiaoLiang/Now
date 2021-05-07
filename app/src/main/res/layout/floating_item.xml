@@ -5,6 +5,7 @@
     android:layout_height="wrap_content"
     android:padding="5dp"
     android:gravity="center"
+    android:orientation="horizontal"
     android:background="@drawable/bg_floating_group">
 
     <TextView
@@ -24,7 +25,7 @@
 
     <TextView
         android:id="@+id/timeView"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textSize="16sp"
         android:text="12:34:56.789"

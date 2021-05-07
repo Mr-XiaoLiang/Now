@@ -1,26 +1,27 @@
 package com.lollipop.now.ui
 
-import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.lollipop.now.R
+import com.lollipop.now.databinding.ItemSiteIntervalBinding
 import com.lollipop.now.list.DirectionInfo
 import com.lollipop.now.list.MovableHolder
 import com.lollipop.now.list.SwipeableHolder
+import com.lollipop.now.util.bind
+import com.lollipop.now.util.changeLayoutParams
 
 /**
  * @author lollipop
  * @date 11/12/20 11:14
  */
-class SiteIntervalHolder private constructor(view: View): RecyclerView.ViewHolder(view),
+class SiteIntervalHolder private constructor(viewBinding: ItemSiteIntervalBinding) :
+    RecyclerView.ViewHolder(viewBinding.root),
     SwipeableHolder, MovableHolder {
 
     companion object {
         fun create(group: ViewGroup): SiteIntervalHolder {
             return SiteIntervalHolder(
-                LayoutInflater.from(group.context)
-                    .inflate(R.layout.item_site_interval, group, false))
+                group.bind<ItemSiteIntervalBinding>()
+                    .changeLayoutParams(matchWidth = true, matchHeight = false))
         }
     }
 

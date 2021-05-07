@@ -9,13 +9,13 @@ import android.os.Looper
 import android.text.TextUtils
 import android.util.Log
 import android.util.TypedValue
-import android.view.KeyEvent
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
+import androidx.viewbinding.ViewBinding
 import java.io.*
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
@@ -538,4 +538,79 @@ fun View.setMargin(run: (ViewGroup.MarginLayoutParams) -> Unit) {
         run(lp)
         this.layoutParams = lp
     }
+}
+
+inline fun <reified T : ViewBinding> Activity.lazyBind(): Lazy<T> = lazy { bind() }
+
+inline fun <reified T : ViewBinding> Fragment.lazyBind(): Lazy<T> = lazy { bind() }
+
+inline fun <reified T : ViewBinding> View.lazyBind(): Lazy<T> = lazy { bind() }
+
+inline fun <reified T : ViewBinding> Activity.bind(): T {
+    return this.layoutInflater.bind()
+}
+
+inline fun <reified T : ViewBinding> Fragment.bind(): T {
+    return this.layoutInflater.bind()
+}
+
+inline fun <reified T : ViewBinding> View.bind(): T {
+    return LayoutInflater.from(this.context).bind()
+}
+
+inline fun <reified T : ViewBinding> LayoutInflater.bind(): T {
+    val layoutInflater: LayoutInflater = this
+    val bindingClass = T::class.java
+    val inflateMethod = bindingClass.getMethod("inflate", LayoutInflater::class.java)
+    val invokeObj = inflateMethod.invoke(null, layoutInflater)
+    if (invokeObj is T) {
+        return invokeObj
+    }
+    throw InflateException("Cant inflate ViewBinding ${bindingClass.name}")
+}
+
+inline fun <reified T : ViewBinding> View.withThis(inflate: Boolean = false): Lazy<T> = lazy {
+    val bindingClass = T::class.java
+    val view: View = this
+    if (view is ViewGroup && inflate) {
+        val bindMethod = bindingClass.getMethod(
+            "inflate",
+            LayoutInflater::class.java,
+            ViewGroup::class.java,
+            Boolean::class.javaPrimitiveType
+        )
+        val bindObj = bindMethod.invoke(null, LayoutInflater.from(context), view, true)
+        if (bindObj is T) {
+            return@lazy bindObj
+        }
+    } else {
+        val bindMethod = bindingClass.getMethod(
+            "bind",
+            View::class.java
+        )
+        val bindObj = bindMethod.invoke(null, view)
+        if (bindObj is T) {
+            return@lazy bindObj
+        }
+    }
+    throw InflateException("Cant inflate ViewBinding ${bindingClass.name}")
+}
+
+inline fun <reified T: View> T.changeLayoutParams(matchWidth: Boolean, matchHeight: Boolean): T {
+    val params = layoutParams ?: ViewGroup.LayoutParams(
+        ViewGroup.LayoutParams.WRAP_CONTENT,
+        ViewGroup.LayoutParams.WRAP_CONTENT)
+    if (matchWidth) {
+        params.width = ViewGroup.LayoutParams.MATCH_PARENT
+    }
+    if (matchHeight) {
+        params.height = ViewGroup.LayoutParams.MATCH_PARENT
+    }
+    layoutParams = params
+    return this
+}
+
+inline fun <reified T: ViewBinding> T.changeLayoutParams(matchWidth: Boolean, matchHeight: Boolean): T {
+    this.root.changeLayoutParams(matchWidth, matchHeight)
+    return this
 }

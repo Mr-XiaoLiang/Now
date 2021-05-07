@@ -12,4 +12,9 @@
         app:showAsAction="ifRoom"
         android:title="@string/import_site"/>
 
+    <item android:id="@+id/notificationHelper"
+        android:icon="@drawable/ic_outline_info"
+        app:showAsAction="ifRoom"
+        android:title="@string/help"/>
+
 </menu>

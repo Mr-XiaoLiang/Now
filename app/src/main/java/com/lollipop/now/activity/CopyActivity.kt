@@ -14,9 +14,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.lollipop.now.R
 import com.lollipop.now.data.SiteHelper
 import com.lollipop.now.data.SiteInfo
+import com.lollipop.now.databinding.ActivityCopyBinding
 import com.lollipop.now.ui.ImportSiteAdapter
 import com.lollipop.now.util.*
-import kotlinx.android.synthetic.main.activity_copy.*
 
 
 class CopyActivity : BaseActivity() {
@@ -26,19 +26,21 @@ class CopyActivity : BaseActivity() {
     private val siteHelper = SiteHelper()
     private val siteAdapter = ImportSiteAdapter(siteList, ::isSelected, ::onSiteClick)
 
+    private val binding: ActivityCopyBinding by lazyBind()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_copy)
-        setSupportActionBar(toolbar)
+        setContentView(binding.root)
+        setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         initWindowFlag()
-        initRootGroup(rootGroup)
+        initRootGroup(binding.rootGroup)
         initView()
         siteHelper.onSync {
             if (it) {
-                loadingView.show()
+                binding.loadingView.show()
             } else {
-                loadingView.hide()
+                binding.loadingView.hide()
             }
         }
     }
@@ -61,14 +63,14 @@ class CopyActivity : BaseActivity() {
     }
 
     private fun initView() {
-        defaultBtn.setOnClickListener {
-            siteInputText.setText(SiteHelper.readDefaultInfo(this))
+        binding.defaultBtn.setOnClickListener {
+            binding.siteInputText.setText(SiteHelper.readDefaultInfo(this))
         }
         onSiteUpdate(false)
-        parseBtn.setOnClickListener {
+        binding.parseBtn.setOnClickListener {
             parseInfo()
         }
-        selectAllBtn.setOnClickListener {
+        binding.selectAllBtn.setOnClickListener {
             if (siteList.size == selectedList.size) {
                 selectedList.clear()
             } else {
@@ -78,13 +80,13 @@ class CopyActivity : BaseActivity() {
             onSelectedSiteChange()
             siteAdapter.notifyDataSetChanged()
         }
-        importBtn.setOnClickListener {
+        binding.importBtn.setOnClickListener {
             import()
         }
-        recyclerView.layoutManager = LinearLayoutManager(
+        binding.recyclerView.layoutManager = LinearLayoutManager(
             this, RecyclerView.VERTICAL, false
         )
-        recyclerView.adapter = siteAdapter
+        binding.recyclerView.adapter = siteAdapter
         siteAdapter.notifyDataSetChanged()
     }
 
@@ -102,7 +104,7 @@ class CopyActivity : BaseActivity() {
     }
 
     private fun onSelectedSiteChange() {
-        importBtn.visibility = if (selectedList.isEmpty()) {
+        binding.importBtn.visibility = if (selectedList.isEmpty()) {
             View.INVISIBLE
         } else {
             View.VISIBLE
@@ -110,21 +112,21 @@ class CopyActivity : BaseActivity() {
     }
 
     private fun parseInfo() {
-        loadingView.show()
-        siteInputText.error = null
+        binding.loadingView.show()
+        binding.siteInputText.error = null
         siteList.clear()
         selectedList.clear()
         doAsync({
             onUI {
-                loadingView.hide()
+                binding.loadingView.hide()
                 onSiteUpdate(true)
-                siteInputText.error = getString(R.string.parse_error)
+                binding.siteInputText.error = getString(R.string.parse_error)
             }
         }) {
-            val siteInfo = siteInputText.text.toString()
+            val siteInfo = binding.siteInputText.text.toString()
             SiteHelper.stringToSiteList(siteInfo, siteList)
             onUI {
-                loadingView.hide()
+                binding.loadingView.hide()
                 onSiteUpdate(true)
             }
         }
@@ -157,44 +159,44 @@ class CopyActivity : BaseActivity() {
         siteAdapter.notifyDataSetChanged()
         if (!isAnimation) {
             if (siteList.isEmpty()) {
-                cardRoot.translationZ = 0F
-                cardContentGroup.visibility = View.INVISIBLE
+                binding.cardRoot.translationZ = 0F
+                binding.cardContentGroup.visibility = View.INVISIBLE
             } else {
                 val cardElevation = resources.getDimensionPixelSize(R.dimen.cardElevation)
-                cardRoot.translationZ = cardElevation * 1F
-                cardContentGroup.visibility = View.VISIBLE
+                binding.cardRoot.translationZ = cardElevation * 1F
+                binding.cardContentGroup.visibility = View.VISIBLE
             }
         } else {
             if (siteList.isEmpty()) {
-                cardRoot.animate().apply {
+                binding.cardRoot.animate().apply {
                     cancel()
                     translationZ(0F)
                     start()
                 }
-                cardContentGroup.animate().apply {
+                binding.cardContentGroup.animate().apply {
                     cancel()
                     alpha(0F)
                     lifecycleBinding {
                         onEnd {
-                            cardContentGroup.visibility = View.INVISIBLE
+                            binding.cardContentGroup.visibility = View.INVISIBLE
                             removeThis(it)
                         }
                     }
                     start()
                 }
             } else {
-                cardRoot.animate().apply {
+                binding.cardRoot.animate().apply {
                     cancel()
                     val cardElevation = resources.getDimensionPixelSize(R.dimen.cardElevation)
                     translationZ(cardElevation * 1F)
                     start()
                 }
-                cardContentGroup.animate().apply {
+                binding.cardContentGroup.animate().apply {
                     cancel()
                     alpha(1F)
                     lifecycleBinding {
                         onStart {
-                            cardContentGroup.visibility = View.VISIBLE
+                            binding.cardContentGroup.visibility = View.VISIBLE
                             removeThis(it)
                         }
                     }
@@ -207,8 +209,8 @@ class CopyActivity : BaseActivity() {
 
     override fun onWindowInsetsChange(left: Int, top: Int, right: Int, bottom: Int) {
         super.onWindowInsetsChange(left, top, right, bottom)
-        appBarLayout.setPadding(left, top, right, 0)
-        rootGroup.setPadding(0, 0, 0, bottom)
+        binding.appBarLayout.setPadding(left, top, right, 0)
+        binding.rootGroup.setPadding(0, 0, 0, bottom)
     }
 
     override fun onDestroy() {

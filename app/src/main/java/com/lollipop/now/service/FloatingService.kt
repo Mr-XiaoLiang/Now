@@ -1,6 +1,5 @@
 package com.lollipop.now.service
 
-import android.annotation.SuppressLint
 import android.app.*
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -14,16 +13,13 @@ import android.os.IBinder
 import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
-import android.widget.TextView
 import androidx.core.app.NotificationCompat
 import com.lollipop.now.R
 import com.lollipop.now.data.OffsetInfo
 import com.lollipop.now.data.SiteHelper
+import com.lollipop.now.databinding.FloatingItemBinding
 import com.lollipop.now.ui.FloatingViewHelper
-import com.lollipop.now.util.CommonUtil
-import com.lollipop.now.util.createTask
-import com.lollipop.now.util.log
-import com.lollipop.now.util.removeTask
+import com.lollipop.now.util.*
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -281,14 +277,12 @@ class FloatingService : Service() {
         var offsetInfo: OffsetInfo? = null
             private set
 
-        @SuppressLint("InflateParams")
-        val view: View = LayoutInflater.from(context).inflate(
-            R.layout.floating_item, null)
+        private val viewBinding: FloatingItemBinding = LayoutInflater.from(context).bind()
 
-        private val iconView: TextView = view.findViewById(R.id.iconView)
-        private val timeView: TextView = view.findViewById<TextView>(R.id.timeView).apply {
-            typeface = Typeface.createFromAsset(context.assets, "DroidSansMono.ttf")
-        }
+        val view: View
+            get() {
+                return viewBinding.root
+            }
 
         val localOffset = TimeZone.getDefault().rawOffset
 
@@ -298,9 +292,13 @@ class FloatingService : Service() {
             onTimeChange()
         }
 
+        init {
+            viewBinding.timeView.typeface = Typeface.createFromAsset(context.assets, "DroidSansMono.ttf")
+        }
+
         fun onStart(info: OffsetInfo) {
             offsetInfo = info
-            iconView.text = info.name
+            viewBinding.iconView.text = info.name
             onTimeChange()
             log("onStart: " + info.name + ", offset: "+ info.offset)
         }
@@ -311,7 +309,7 @@ class FloatingService : Service() {
         }
 
         private fun onTimeChange() {
-            timeView.text = getTime()
+            viewBinding.timeView.text = getTime()
             removeTask(updateTask)
             CommonUtil.onUI(updateTask)
         }
@@ -319,7 +317,7 @@ class FloatingService : Service() {
         private fun getTime(): String {
             val offset = offsetInfo?.offset ?: 0L
             if (offset == SiteHelper.OFFSET_ERROR) {
-                return timeView.resources.getString(R.string.sync_error)
+                return viewBinding.timeView.resources.getString(R.string.sync_error)
             }
             val now = System.currentTimeMillis() + offset + localOffset
             val inDay = now % DAY
