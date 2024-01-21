@@ -38,64 +38,64 @@ object AnimatorHelper {
  */
 class AnimatorListenerImpl: AnimatorListenerAdapter() {
 
-    var cancelListener: ((Animator?) -> Unit)? = null
-    var repeatListener: ((Animator?) -> Unit)? = null
-    var startListener: ((Animator?) -> Unit)? = null
-    var pauseListener: ((Animator?) -> Unit)? = null
-    var resumeListener: ((Animator?) -> Unit)? = null
-    var endListener: ((Animator?) -> Unit)? = null
+    var cancelListener: ((Animator) -> Unit)? = null
+    var repeatListener: ((Animator) -> Unit)? = null
+    var startListener: ((Animator) -> Unit)? = null
+    var pauseListener: ((Animator) -> Unit)? = null
+    var resumeListener: ((Animator) -> Unit)? = null
+    var endListener: ((Animator) -> Unit)? = null
 
-    override fun onAnimationCancel(animation: Animator?) {
+    override fun onAnimationCancel(animation: Animator) {
         cancelListener?.invoke(animation)
     }
 
-    override fun onAnimationRepeat(animation: Animator?) {
+    override fun onAnimationRepeat(animation: Animator) {
         repeatListener?.invoke(animation)
     }
 
-    override fun onAnimationStart(animation: Animator?) {
+    override fun onAnimationStart(animation: Animator) {
         startListener?.invoke(animation)
     }
 
-    override fun onAnimationPause(animation: Animator?) {
+    override fun onAnimationPause(animation: Animator) {
         pauseListener?.invoke(animation)
     }
 
-    override fun onAnimationResume(animation: Animator?) {
+    override fun onAnimationResume(animation: Animator) {
         resumeListener?.invoke(animation)
     }
 
-    override fun onAnimationEnd(animation: Animator?) {
+    override fun onAnimationEnd(animation: Animator) {
         super.onAnimationEnd(animation)
         endListener?.invoke(animation)
     }
 
-    fun removeThis(animation: Animator?) {
-        animation?.removeListener(this)
+    fun removeThis(animation: Animator) {
+        animation.removeListener(this)
     }
 }
 
-fun AnimatorListenerImpl.onCancel(run: (Animator?) -> Unit) {
+fun AnimatorListenerImpl.onCancel(run: (Animator) -> Unit) {
     this.cancelListener = run
 }
 
-fun AnimatorListenerImpl.onRepeat(run: (Animator?) -> Unit) {
+fun AnimatorListenerImpl.onRepeat(run: (Animator) -> Unit) {
     this.repeatListener = run
 }
 
-fun AnimatorListenerImpl.onStart(run: (Animator?) -> Unit) {
+fun AnimatorListenerImpl.onStart(run: (Animator) -> Unit) {
     this.startListener = run
 }
 
-fun AnimatorListenerImpl.onPause(run: (Animator?) -> Unit) {
+fun AnimatorListenerImpl.onPause(run: (Animator) -> Unit) {
     this.pauseListener = run
 }
 
-fun AnimatorListenerImpl.onResume(run: (Animator?) -> Unit) {
+fun AnimatorListenerImpl.onResume(run: (Animator) -> Unit) {
     this.resumeListener = run
 }
 
-fun AnimatorListenerImpl.onEnd(run: (Animator?) -> Unit) {
+fun AnimatorListenerImpl.onEnd(run: (Animator) -> Unit) {
     this.endListener = run
 }
 

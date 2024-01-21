@@ -112,24 +112,24 @@ class EditDialog(
         contentGroup.translationY = (contentGroup.top + contentGroup.height) * (progress - 1)
     }
 
-    override fun onAnimationUpdate(animation: ValueAnimator?) {
+    override fun onAnimationUpdate(animation: ValueAnimator) {
         if (animation == valueAnimator) {
             progress = animation.animatedValue as Float
             onProgressChange()
         }
     }
 
-    override fun onAnimationRepeat(animation: Animator?) { }
+    override fun onAnimationRepeat(animation: Animator) { }
 
-    override fun onAnimationEnd(animation: Animator?) {
+    override fun onAnimationEnd(animation: Animator) {
         if (!pullCurtain) {
             dialogRoot.visibility = View.INVISIBLE
         }
     }
 
-    override fun onAnimationCancel(animation: Animator?) {  }
+    override fun onAnimationCancel(animation: Animator) {  }
 
-    override fun onAnimationStart(animation: Animator?) {
+    override fun onAnimationStart(animation: Animator) {
         if (pullCurtain) {
             dialogRoot.visibility = View.VISIBLE
         }
