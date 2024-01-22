@@ -11,8 +11,8 @@ android {
         applicationId = "com.lollipop.now"
         minSdk = 26
         targetSdk = 34
-        versionCode = 3
-        versionName = "1.6"
+        versionCode = 1_07_000
+        versionName = "1.07.000"
     }
 
     buildTypes {

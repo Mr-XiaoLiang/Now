@@ -16,6 +16,7 @@ import android.graphics.Typeface
 import android.net.Uri
 import android.os.Build
 import android.os.IBinder
+import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
@@ -152,7 +153,7 @@ class FloatingService : Service() {
     }
 
     private fun checkPermission(): Boolean {
-        if (!android.provider.Settings.canDrawOverlays(this)) {
+        if (!Settings.canDrawOverlays(this)) {
             notificationToOpenPermission()
             stop()
             return false
@@ -161,11 +162,13 @@ class FloatingService : Service() {
     }
 
     private fun notificationToOpenPermission() {
-        val action = android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION
         val intent = PendingIntent.getActivity(
             this,
             PENDING_REQUEST_PERMISSION,
-            Intent(action, Uri.parse("package:$packageName")),
+            Intent(
+                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:$packageName")
+            ),
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 PendingIntent.FLAG_IMMUTABLE
             } else {

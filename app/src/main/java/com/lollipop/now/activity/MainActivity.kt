@@ -2,6 +2,7 @@ package com.lollipop.now.activity
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.view.Menu
@@ -93,6 +94,8 @@ class MainActivity : AppCompatActivity() {
         binding.startBtn.setOnClickListener {
             if (!notificationManager.areNotificationsEnabled()) {
                 hintNotificationDisableAlert()
+            } else if (!Settings.canDrawOverlays(this)) {
+                hintFloatingWindowAlert()
             } else {
                 FloatingService.start(this, false)
             }
@@ -107,6 +110,21 @@ class MainActivity : AppCompatActivity() {
             showNotificationAlert()
         }
 
+    }
+
+    private fun hintFloatingWindowAlert() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.notifi_title_no_alert)
+            .setMessage(R.string.notifi_msg_no_alert)
+            .setPositiveButton(R.string.complete) { dialog, _ ->
+                startActivity(
+                    Intent(
+                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        Uri.parse("package:$packageName")
+                    )
+                )
+                dialog.dismiss()
+            }.show()
     }
 
     private fun hintNotificationDisableAlert() {
