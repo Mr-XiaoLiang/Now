@@ -1,12 +1,24 @@
 package com.lollipop.now.activity
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
+import android.provider.Settings
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.NotificationManagerCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.lollipop.base.listener.BackPressHandler
+import com.lollipop.base.util.doAsync
+import com.lollipop.base.util.insets.WindowInsetsEdge
+import com.lollipop.base.util.insets.WindowInsetsHelper
+import com.lollipop.base.util.insets.fixInsetsByMargin
+import com.lollipop.base.util.insets.fixInsetsByPadding
+import com.lollipop.base.util.lazyBind
+import com.lollipop.base.util.onUI
 import com.lollipop.now.R
 import com.lollipop.now.data.SiteHelper
 import com.lollipop.now.data.SiteInfo
@@ -18,31 +30,15 @@ import com.lollipop.now.ui.EditDialog
 import com.lollipop.now.ui.SiteAdapter
 import com.lollipop.now.util.SharedPreferencesUtils.privateGet
 import com.lollipop.now.util.SharedPreferencesUtils.privateSet
-import com.lollipop.now.util.doAsync
-import com.lollipop.now.util.lazyBind
-import com.lollipop.now.util.onUI
-import com.lollipop.now.util.setMargin
 
-class MainActivity : BaseActivity() {
+class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val KEY_NOTIFICATION_ALERT = "KEY_NOTIFICATION_ALERT"
     }
 
-    private var editDialog: EditDialog? = null
-
-    private val siteHelper = SiteHelper()
-    private val siteAdapter = SiteAdapter(siteHelper, ::changeItem)
-
-    private val binding: ActivityMainBinding by lazyBind()
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(binding.root)
-        setSupportActionBar(binding.toolbar)
-        initWindowFlag()
-        initRootGroup(binding.rootGroup)
-        editDialog = EditDialog(
+    private val editDialog: EditDialog by lazy {
+        EditDialog(
             binding.dialogRoot,
             binding.dialogBackground,
             binding.dialogContent,
@@ -50,9 +46,39 @@ class MainActivity : BaseActivity() {
             binding.titleInputText,
             binding.urlInputText,
             binding.submitBtn,
-            binding.cancelBtn, ::onSiteInfoChange
-        )
+            binding.cancelBtn,
+            ::onSiteInfoChange
+        ).apply {
+            setShownStatusChangeListener {
+                editDialogBackPressHandler.isEnabled = it
+            }
+        }
+    }
 
+    private val siteHelper = SiteHelper()
+    private val siteAdapter = SiteAdapter(siteHelper, ::changeItem)
+
+    private val binding: ActivityMainBinding by lazyBind()
+
+    private val editDialogBackPressHandler = BackPressHandler.create(false) {
+        editDialog.dismiss()
+        it.isEnabled = false
+    }
+
+    private val notificationManager by lazy {
+        NotificationManagerCompat.from(this)
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(binding.root)
+        setSupportActionBar(binding.toolbar)
+        WindowInsetsHelper.fitsSystemWindows(this)
+        binding.appBarLayout.fixInsetsByPadding(WindowInsetsEdge.HEADER)
+        binding.startBtn.fixInsetsByMargin(WindowInsetsEdge.CONTENT)
+        binding.dialogContent.fixInsetsByMargin(WindowInsetsEdge.HEADER)
+        BackPressHandler.findDispatcher(this).bind(editDialogBackPressHandler)
         binding.recyclerView.adapter = siteAdapter
         binding.recyclerView.layoutManager = LinearLayoutManager(
             this, RecyclerView.VERTICAL, false
@@ -65,7 +91,11 @@ class MainActivity : BaseActivity() {
         siteAdapter.notifyDataSetChanged()
 
         binding.startBtn.setOnClickListener {
-            FloatingService.start(this, false)
+            if (!notificationManager.areNotificationsEnabled()) {
+                hintNotificationDisableAlert()
+            } else {
+                FloatingService.start(this, false)
+            }
         }
 
         binding.netDelaySwitch.isChecked = SiteHelper.isNetDelay(this)
@@ -77,6 +107,22 @@ class MainActivity : BaseActivity() {
             showNotificationAlert()
         }
 
+    }
+
+    private fun hintNotificationDisableAlert() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.hint_title_permission)
+            .setMessage(R.string.hint_notification_disable)
+            .setPositiveButton(R.string.complete) { dialog, _ ->
+                startActivity(
+                    Intent().apply {
+                        setAction(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                        putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+                        putExtra(Settings.EXTRA_CHANNEL_ID, applicationInfo.uid)
+                    }
+                )
+                dialog.dismiss()
+            }.show()
     }
 
     private fun showNotificationAlert() {
@@ -91,6 +137,7 @@ class MainActivity : BaseActivity() {
             }.show()
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     override fun onResume() {
         super.onResume()
         doAsync {
@@ -112,14 +159,17 @@ class MainActivity : BaseActivity() {
                 addItem()
                 true
             }
+
             R.id.copyItem -> {
                 startActivity(Intent(this, CopyActivity::class.java))
                 true
             }
+
             R.id.notificationHelper -> {
                 showNotificationAlert()
                 true
             }
+
             else -> {
                 super.onOptionsItemSelected(item)
             }
@@ -127,11 +177,11 @@ class MainActivity : BaseActivity() {
     }
 
     private fun addItem() {
-        editDialog?.show(SiteInfo(), -1)
+        editDialog.show(SiteInfo(), -1)
     }
 
     private fun changeItem(info: SiteInfo, index: Int) {
-        editDialog?.show(info, index)
+        editDialog.show(info, index)
     }
 
     private fun onSiteInfoChange(name: String, url: String, tag: Int) {
@@ -141,29 +191,6 @@ class MainActivity : BaseActivity() {
         } else {
             siteAdapter.changeInfo(tag, info)
         }
-    }
-
-    override fun onWindowInsetsChange(left: Int, top: Int, right: Int, bottom: Int) {
-        binding.appBarLayout.setPadding(left, top, right, 0)
-        binding.startBtn.setMargin {
-            val baseMargin = resources.getDimensionPixelSize(R.dimen.fab_margin)
-            it.bottomMargin = baseMargin + bottom
-            it.rightMargin = baseMargin + right
-        }
-        binding.dialogContent.setMargin {
-            val baseMargin = resources.getDimensionPixelSize(R.dimen.fab_margin)
-            it.topMargin = baseMargin + top
-            it.rightMargin = baseMargin + right
-            it.leftMargin = baseMargin + left
-        }
-    }
-
-    override fun onBackPressed() {
-        if (editDialog?.isShown == true) {
-            editDialog?.dismiss()
-            return
-        }
-        super.onBackPressed()
     }
 
     override fun onDestroy() {

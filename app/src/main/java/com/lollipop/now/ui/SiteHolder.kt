@@ -2,10 +2,9 @@ package com.lollipop.now.ui
 
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.lollipop.base.util.bind
 import com.lollipop.now.data.SiteInfo
 import com.lollipop.now.databinding.ItemWebSiteBinding
-import com.lollipop.now.util.bind
-import com.lollipop.now.util.changeLayoutParams
 
 /**
  * @author lollipop
@@ -15,15 +14,18 @@ import com.lollipop.now.util.changeLayoutParams
 class SiteHolder
 private constructor(
     private val viewBinding: ItemWebSiteBinding,
-    private val onClick: (SiteHolder) -> Unit): RecyclerView.ViewHolder(viewBinding.root) {
+    private val onClick: (SiteHolder) -> Unit
+) : RecyclerView.ViewHolder(viewBinding.root) {
 
     companion object {
-        fun create(group: ViewGroup,
-                   onClick: (SiteHolder) -> Unit): SiteHolder {
+        fun create(
+            group: ViewGroup,
+            onClick: (SiteHolder) -> Unit
+        ): SiteHolder {
             return SiteHolder(
-                group.bind<ItemWebSiteBinding>()
-                    .changeLayoutParams(matchWidth = true, matchHeight = false),
-                onClick)
+                group.bind(attach = false),
+                onClick
+            )
         }
     }
 

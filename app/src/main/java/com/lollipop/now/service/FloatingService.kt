@@ -1,10 +1,16 @@
 package com.lollipop.now.service
 
-import android.app.*
+import android.annotation.SuppressLint
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.app.Service
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.ServiceInfo
 import android.graphics.BitmapFactory
 import android.graphics.Typeface
 import android.net.Uri
@@ -14,14 +20,16 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
 import androidx.core.app.NotificationCompat
+import com.lollipop.base.util.bind
+import com.lollipop.base.util.lazyLogD
+import com.lollipop.base.util.task
 import com.lollipop.now.R
 import com.lollipop.now.data.OffsetInfo
 import com.lollipop.now.data.SiteHelper
 import com.lollipop.now.databinding.FloatingItemBinding
 import com.lollipop.now.ui.FloatingViewHelper
-import com.lollipop.now.util.*
-import java.util.*
-import kotlin.collections.ArrayList
+import java.util.LinkedList
+import java.util.TimeZone
 
 class FloatingService : Service() {
 
@@ -45,7 +53,7 @@ class FloatingService : Service() {
         fun start(context: Context, isStop: Boolean) {
             val intent = Intent(context, FloatingService::class.java)
             intent.putExtra(ARG_STOP, isStop)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !isStop) {
+            if (!isStop) {
                 context.startForegroundService(intent)
             } else {
                 context.startService(intent)
@@ -73,10 +81,11 @@ class FloatingService : Service() {
         }
     }
 
-    private val syncNetTime = createTask {
-        siteHelper.sync()
+    private val syncNetTime = task {
+        siteHelper.async()
     }
 
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     override fun onCreate() {
         super.onCreate()
         siteHelper.onSync {
@@ -85,23 +94,42 @@ class FloatingService : Service() {
         }
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         createChannels()
-        registerReceiver(closeBroadcast, IntentFilter(ACTION_CLOSE_FLOATING))
-    }
-
-    private fun createChannels() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val androidChannel = NotificationChannel(FOLLOWERS_CHANNEL_ID,
-                getString(R.string.floating_channel_name),
-                NotificationManager.IMPORTANCE_HIGH)
-            androidChannel.lockscreenVisibility = Notification.VISIBILITY_PRIVATE
-            androidChannel.importance = NotificationManager.IMPORTANCE_NONE
-            notificationManager.createNotificationChannel(androidChannel)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(
+                closeBroadcast,
+                IntentFilter(ACTION_CLOSE_FLOATING),
+                RECEIVER_EXPORTED
+            )
+        } else {
+            registerReceiver(
+                closeBroadcast,
+                IntentFilter(ACTION_CLOSE_FLOATING)
+            )
         }
     }
 
+    private fun createChannels() {
+        val androidChannel = NotificationChannel(
+            FOLLOWERS_CHANNEL_ID,
+            getString(R.string.floating_channel_name),
+            NotificationManager.IMPORTANCE_HIGH
+        )
+        androidChannel.lockscreenVisibility = Notification.VISIBILITY_PRIVATE
+        androidChannel.importance = NotificationManager.IMPORTANCE_NONE
+        notificationManager.createNotificationChannel(androidChannel)
+    }
+
     private fun createNotification(): Notification {
-        val closeIntent = PendingIntent.getBroadcast(this, NOTIFICATION_ID,
-            Intent(ACTION_CLOSE_FLOATING), PendingIntent.FLAG_UPDATE_CURRENT)
+        val closeIntent = PendingIntent.getBroadcast(
+            this,
+            NOTIFICATION_ID,
+            Intent(ACTION_CLOSE_FLOATING),
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                PendingIntent.FLAG_IMMUTABLE
+            } else {
+                PendingIntent.FLAG_UPDATE_CURRENT
+            }
+        )
         val builder = NotificationCompat.Builder(this, FOLLOWERS_CHANNEL_ID)
         builder.setAutoCancel(false)//可以点击通知栏的删除按钮删除
             .setPriority(NotificationCompat.PRIORITY_MIN)//最高等级的通知优先级
@@ -112,16 +140,19 @@ class FloatingService : Service() {
             .setShowWhen(false)
             .setContentTitle(getString(R.string.floating_notif_title))//设置标题
             .setContentText(getString(R.string.floating_notif_msg))//设置内容
-            .setLargeIcon(BitmapFactory.decodeResource(this.resources,
-                R.mipmap.ic_launcher)) // 设置下拉列表中的图标(大图标)
+            .setLargeIcon(
+                BitmapFactory.decodeResource(
+                    this.resources,
+                    R.mipmap.ic_launcher
+                )
+            ) // 设置下拉列表中的图标(大图标)
             .addAction(0, getString(R.string.close_floating), closeIntent)
 
         return builder.build()
     }
 
     private fun checkPermission(): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
-            && !android.provider.Settings.canDrawOverlays(this)) {
+        if (!android.provider.Settings.canDrawOverlays(this)) {
             notificationToOpenPermission()
             stop()
             return false
@@ -130,20 +161,26 @@ class FloatingService : Service() {
     }
 
     private fun notificationToOpenPermission() {
-        val action = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION
-        } else {
-            android.provider.Settings.ACTION_APPLICATION_SETTINGS
-        }
-        val intent = PendingIntent.getActivity(this,
+        val action = android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION
+        val intent = PendingIntent.getActivity(
+            this,
             PENDING_REQUEST_PERMISSION,
             Intent(action, Uri.parse("package:$packageName")),
-            PendingIntent.FLAG_UPDATE_CURRENT)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                PendingIntent.FLAG_IMMUTABLE
+            } else {
+                PendingIntent.FLAG_UPDATE_CURRENT
+            }
+        )
         val notification = NotificationCompat.Builder(this, FOLLOWERS_CHANNEL_ID)
             .setContentTitle(getString(R.string.notifi_title_no_alert))
             .setContentText(getString(R.string.notifi_msg_no_alert))
-            .setLargeIcon(BitmapFactory.decodeResource(this.resources,
-                R.mipmap.ic_launcher)) // 设置下拉列表中的图标(大图标)
+            .setLargeIcon(
+                BitmapFactory.decodeResource(
+                    this.resources,
+                    R.mipmap.ic_launcher
+                )
+            ) // 设置下拉列表中的图标(大图标)
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_MAX)//最高等级的通知优先级
             .setOngoing(false)
@@ -155,9 +192,7 @@ class FloatingService : Service() {
     }
 
     private fun stop() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            stopForeground(STOP_FOREGROUND_REMOVE)
-        }
+        stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
 
@@ -187,17 +222,29 @@ class FloatingService : Service() {
         if (!isReady) {
             return
         }
-        removeTask(syncNetTime)
-        CommonUtil.delay(SYNC_DELAY, syncNetTime)
+        syncNetTime.cancel()
+        syncNetTime.delay(SYNC_DELAY)
     }
 
     private fun showForeground() {
-        startForeground(NOTIFICATION_ID, createNotification())
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startForeground(
+                NOTIFICATION_ID,
+                createNotification(),
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+            )
+        } else {
+            startForeground(
+                NOTIFICATION_ID,
+                createNotification(),
+            )
+        }
     }
 
     private fun checkFloating() {
         while (floatingHolderList.isNotEmpty()
-            && floatingHolderList.size > siteHelper.siteCount) {
+            && floatingHolderList.size > siteHelper.siteCount
+        ) {
             removeHolder(floatingHolderList[0])
         }
         while (floatingHolderList.size < siteHelper.siteCount) {
@@ -277,6 +324,8 @@ class FloatingService : Service() {
         var offsetInfo: OffsetInfo? = null
             private set
 
+        private val log by lazyLogD()
+
         private val viewBinding: FloatingItemBinding = LayoutInflater.from(context).bind()
 
         val view: View
@@ -288,30 +337,31 @@ class FloatingService : Service() {
 
         private val tempBuilder = StringBuilder()
 
-        private val updateTask = createTask {
+        private val updateTask = task {
             onTimeChange()
         }
 
         init {
-            viewBinding.timeView.typeface = Typeface.createFromAsset(context.assets, "DroidSansMono.ttf")
+            viewBinding.timeView.typeface =
+                Typeface.createFromAsset(context.assets, "DroidSansMono.ttf")
         }
 
         fun onStart(info: OffsetInfo) {
             offsetInfo = info
             viewBinding.iconView.text = info.name
             onTimeChange()
-            log("onStart: " + info.name + ", offset: "+ info.offset)
+            log("onStart: " + info.name + ", offset: " + info.offset)
         }
 
         fun onStop() {
             offsetInfo = null
-            removeTask(updateTask)
+            updateTask.cancel()
         }
 
         private fun onTimeChange() {
             viewBinding.timeView.text = getTime()
-            removeTask(updateTask)
-            CommonUtil.onUI(updateTask)
+            updateTask.cancel()
+            updateTask.sync()
         }
 
         private fun getTime(): String {

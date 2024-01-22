@@ -8,7 +8,7 @@ import android.view.View
 import android.widget.EditText
 import android.widget.TextView
 import androidx.core.widget.doOnTextChanged
-import com.lollipop.now.util.closeBoard
+import com.lollipop.base.util.closeBoard
 import com.lollipop.now.data.SiteInfo
 
 /**
@@ -26,7 +26,8 @@ class EditDialog(
     private val urlInput: EditText,
     submitBtn: View,
     cancelBtn: View,
-    private val onSubmitCallback: (String, String, Int) -> Unit):
+    private val onSubmitCallback: (String, String, Int) -> Unit
+) :
     ValueAnimator.AnimatorUpdateListener,
     Animator.AnimatorListener {
 
@@ -39,6 +40,8 @@ class EditDialog(
     private val valueAnimator = ValueAnimator()
     private var tag = -1
 
+    private var statusListener: ((Boolean) -> Unit)? = null
+
     init {
         valueAnimator.addUpdateListener(this)
         valueAnimator.addListener(this)
@@ -46,7 +49,7 @@ class EditDialog(
         dialogRoot.visibility = View.INVISIBLE
 
         titleInput.doOnTextChanged { text, _, _, _ ->
-            iconView.text = text?:""
+            iconView.text = text ?: ""
         }
 
         submitBtn.setOnClickListener {
@@ -57,22 +60,28 @@ class EditDialog(
         }
     }
 
+    fun setShownStatusChangeListener(listener: (Boolean) -> Unit) {
+        this.statusListener = listener
+    }
+
     val isShown: Boolean
         get() {
             return pullCurtain && dialogRoot.isShown
         }
 
     private fun submit() {
-        val name = titleInput.text?.toString()?:""
-        val url = urlInput.text?.toString()?:""
+        val name = titleInput.text?.toString() ?: ""
+        val url = urlInput.text?.toString() ?: ""
         onSubmitCallback(name, url, tag)
         dismiss()
     }
 
     fun dismiss() {
+        statusListener?.invoke(false)
         if (!dialogRoot.isAttachedToWindow
             || dialogRoot.parent == null
-            || !dialogRoot.isShown) {
+            || !dialogRoot.isShown
+        ) {
             return
         }
         titleInput.closeBoard()
@@ -80,6 +89,7 @@ class EditDialog(
     }
 
     fun show(info: SiteInfo, tag: Int) {
+        statusListener?.invoke(true)
         this.tag = tag
         iconView.text = info.name
         titleInput.setText(info.name)
@@ -92,7 +102,11 @@ class EditDialog(
     private fun doAnimation(open: Boolean) {
         pullCurtain = open
         valueAnimator.cancel()
-        val endValue = if (open) { 1F } else { 0F }
+        val endValue = if (open) {
+            1F
+        } else {
+            0F
+        }
         valueAnimator.duration = if (open) {
             (endValue - progress) * DURATION
         } else {
@@ -119,7 +133,7 @@ class EditDialog(
         }
     }
 
-    override fun onAnimationRepeat(animation: Animator) { }
+    override fun onAnimationRepeat(animation: Animator) {}
 
     override fun onAnimationEnd(animation: Animator) {
         if (!pullCurtain) {
@@ -127,7 +141,7 @@ class EditDialog(
         }
     }
 
-    override fun onAnimationCancel(animation: Animator) {  }
+    override fun onAnimationCancel(animation: Animator) {}
 
     override fun onAnimationStart(animation: Animator) {
         if (pullCurtain) {
@@ -135,7 +149,7 @@ class EditDialog(
         }
     }
 
-    private class EmptyTouchCallback: View.OnTouchListener {
+    private class EmptyTouchCallback : View.OnTouchListener {
         @SuppressLint("ClickableViewAccessibility")
         override fun onTouch(v: View?, event: MotionEvent?): Boolean {
             return true

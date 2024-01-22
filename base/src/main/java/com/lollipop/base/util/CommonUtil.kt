@@ -1,7 +1,9 @@
-package com.lollipop.now.util
+package com.lollipop.base.util
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
+import android.content.res.Resources
 import android.graphics.Color
 import android.os.Build
 import android.os.Handler
@@ -13,10 +15,11 @@ import android.view.*
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
-import androidx.core.content.ContextCompat
-import androidx.fragment.app.Fragment
-import androidx.viewbinding.ViewBinding
+import androidx.annotation.ChecksSdkIntAtLeast
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
 import java.io.*
+import java.lang.ref.WeakReference
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 
@@ -31,7 +34,7 @@ object CommonUtil {
     /**
      * 全局的打印日志的关键字
      */
-    var logTag = "Lollipop"
+    var logTag = "Techo"
 
     /**
      * 异步线程池
@@ -59,6 +62,17 @@ object CommonUtil {
      */
     fun <T> onUI(task: Task<T>) {
         mainThread.post(task.runnable)
+    }
+
+    /**
+     * 主线程
+     */
+    fun <T> tryUI(task: Task<T>) {
+        if (Thread.currentThread() == Looper.getMainLooper().thread) {
+            task.runnable.run()
+        } else {
+            mainThread.post(task.runnable)
+        }
     }
 
     /**
@@ -147,7 +161,7 @@ inline fun <reified T> T.task(
  * 异步任务
  */
 inline fun <reified T> T.doAsync(
-    noinline err: ((Throwable) -> Unit) = {},
+    noinline err: ((Throwable) -> Unit) = { it.printStackTrace() },
     noinline run: T.() -> Unit
 ): CommonUtil.Task<T> {
     val task = task(err, run)
@@ -167,6 +181,15 @@ inline fun <reified T> T.onUI(
     return task
 }
 
+inline fun <reified T> T.tryUI(
+    noinline err: ((Throwable) -> Unit) = {},
+    noinline run: T.() -> Unit
+): CommonUtil.Task<T> {
+    val task = task(err, run)
+    CommonUtil.tryUI(task)
+    return task
+}
+
 /**
  * 延迟任务
  */
@@ -180,23 +203,35 @@ inline fun <reified T> T.delay(
     return task
 }
 
-inline fun <reified T: Any> T.createTask(
-    noinline err: ((Throwable) -> Unit) = {},
-    noinline run: T.() -> Unit): CommonUtil.Task<T> {
-    return CommonUtil.Task(this, err, run)
-}
-
-inline fun <reified T: Any> T.removeTask(task: CommonUtil.Task<T>) {
-    CommonUtil.remove(task)
-}
-
 /**
  * 一个全局的打印Log的方法
  */
-inline fun <reified T : Any> T.log(vararg value: Any) {
-    Log.d(CommonUtil.logTag, "${this.javaClass.simpleName} -> ${CommonUtil.print(value)}")
+inline fun <reified T : Any> T.logD(tag: String = ""): (String) -> Unit {
+    val logTag = "$tag ${this.javaClass.simpleName}@${System.identityHashCode(this)}"
+    return { value ->
+        value.splitLog {
+            Log.d(CommonUtil.logTag, "$logTag -> $value")
+        }
+    }
 }
 
+inline fun <reified T : Any> T.lazyLogD(tag: String = "") = lazy { logD(tag) }
+
+fun CharSequence.splitLog(callback: (CharSequence) -> Unit) {
+    val value = this
+    val splitLength = 500
+    val length = value.length
+    if (length <= splitLength) {
+        callback(value)
+        return
+    }
+    var startIndex = 0
+    while (startIndex < length) {
+        val endIndex = kotlin.math.min(startIndex + splitLength, length)
+        callback(value.subSequence(startIndex, endIndex))
+        startIndex = endIndex
+    }
+}
 
 /**
  * 对一个输入框关闭键盘
@@ -211,6 +246,22 @@ fun EditText.closeBoard() {
                 imm.hideSoftInputFromWindow(token, InputMethodManager.HIDE_NOT_ALWAYS)
             }
         }
+    }
+}
+
+/**
+ * 对一个输入框请求键盘
+ */
+fun EditText.requestBoard(selected: Int = -1) {
+    requestFocus()
+    if (selected < 0) {
+        setSelection(text.length)
+    } else {
+        setSelection(selected)
+    }
+    val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE)
+    if (imm is InputMethodManager) {
+        imm.showSoftInput(this, 0)
     }
 }
 
@@ -237,97 +288,57 @@ fun Activity.closeBoard() {
  * 对一个颜色值设置它的透明度
  * 只支持#AARRGGBB格式排列的颜色值
  */
-fun Int.alpha(a: Int): Int {
-    return this and 0xFFFFFF or ((a % 255) shl 24)
+fun Int.changeAlpha(a: Int): Int {
+    return this and 0xFFFFFF or ((a % 256) shl 24)
 }
 
 /**
  * 以浮点数的形式，以当前透明度为基础，
  * 调整颜色值的透明度
  */
-fun Int.alpha(f: Float): Int {
-    return this.alpha(((this shr 24) * f).toInt().range(0, 255))
+fun Int.changeAlpha(f: Float): Int {
+    return this.changeAlpha(((this ushr 24) * f).toInt().range(0, 255))
 }
 
 /**
  * 将一个浮点数，以dip为单位转换为对应的像素值
  */
-fun Float.toDip(context: Context): Float {
-    return TypedValue.applyDimension(
-        TypedValue.COMPLEX_UNIT_DIP, this,
-        context.resources.displayMetrics
-    )
-}
+val Float.dp2px: Float
+    get() {
+        return TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP,
+            this,
+            Resources.getSystem().displayMetrics
+        )
+    }
 
 /**
  * 将一个浮点数，以sp为单位转换为对应的像素值
  */
-fun Float.toSp(context: Context): Float {
-    return TypedValue.applyDimension(
-        TypedValue.COMPLEX_UNIT_SP, this,
-        context.resources.displayMetrics
-    )
-}
-
-/**
- * 将一个浮点数，以dip为单位转换为对应的像素值
- */
-fun Float.toDip(view: View): Float {
-    return this.toDip(view.context)
-}
-
-/**
- * 将一个浮点数，以sp为单位转换为对应的像素值
- */
-fun Float.toSp(view: View): Float {
-    return this.toSp(view.context)
-}
+val Float.sp2px: Float
+    get() {
+        return TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_SP,
+            this,
+            Resources.getSystem().displayMetrics
+        )
+    }
 
 /**
  * 将一个整数，以dip为单位转换为对应的像素值
  */
-fun Int.toDip(view: View): Float {
-    return this.toFloat().toDip(view.context)
-}
-
-/**
- * 将一个整数，以dip为单位转换为对应的像素值
- */
-fun Int.toDip(context: Context): Float {
-    return this.toFloat().toDip(context)
-}
-
-/**
- * 将一个整数作为id来寻找对应的颜色值，
- * 如果找不到或者发生了异常，那么将会返回白色
- */
-fun Int.findColor(context: Context): Int {
-    try {
-        return ContextCompat.getColor(context, this)
-    } catch (e: Throwable) {
+val Int.dp2px: Int
+    get() {
+        return this.toFloat().dp2px.toInt()
     }
-    return Color.WHITE
-}
 
 /**
- * 将一个整数作为id来寻找对应的颜色值，
- * 如果找不到或者发生了异常，那么将会返回白色
+ * 将一个整数，以sp为单位转换为对应的像素值
  */
-fun Int.findColor(view: View): Int {
-    return this.findColor(view.context)
-}
-
-/**
- * 如果当前整数是0，那么获取回调函数中的值作为返回值
- * 否则返回当前
- */
-fun Int.zeroTo(value: () -> Int): Int {
-    return if (this == 0) {
-        value()
-    } else {
-        this
+val Int.sp2px: Int
+    get() {
+        return this.toFloat().sp2px.toInt()
     }
-}
 
 /**
  * 对一个浮点数做范围约束
@@ -356,10 +367,12 @@ fun String.parseColor(): Int {
             val v = (value + value).toInt(16)
             Color.rgb(v, v, v)
         }
+
         2 -> {
             val v = value.toInt(16)
             Color.rgb(v, v, v)
         }
+
         3 -> {
             val r = value.substring(0, 1)
             val g = value.substring(1, 2)
@@ -370,6 +383,7 @@ fun String.parseColor(): Int {
                 (b + b).toInt(16)
             )
         }
+
         4, 5 -> {
             val a = value.substring(0, 1)
             val r = value.substring(1, 2)
@@ -382,12 +396,14 @@ fun String.parseColor(): Int {
                 (b + b).toInt(16)
             )
         }
+
         6, 7 -> {
             val r = value.substring(0, 2).toInt(16)
             val g = value.substring(2, 4).toInt(16)
             val b = value.substring(4, 6).toInt(16)
             Color.rgb(r, g, b)
         }
+
         8 -> {
             val a = value.substring(0, 2).toInt(16)
             val r = value.substring(2, 4).toInt(16)
@@ -395,6 +411,7 @@ fun String.parseColor(): Int {
             val b = value.substring(6, 8).toInt(16)
             Color.argb(a, r, g, b)
         }
+
         else -> {
             Color.WHITE
         }
@@ -407,8 +424,8 @@ fun String.parseColor(): Int {
 inline fun <reified T : EditText> T.onActionDone(noinline run: T.() -> Unit) {
     this.imeOptions = EditorInfo.IME_ACTION_DONE
     this.setOnEditorActionListener { _, actionId, event ->
-        if (actionId == EditorInfo.IME_ACTION_DONE
-            || event.keyCode == KeyEvent.KEYCODE_ENTER
+        if (actionId.and(EditorInfo.IME_ACTION_DONE) != 0
+            || event?.keyCode == KeyEvent.KEYCODE_ENTER
         ) {
             run.invoke(this)
             true
@@ -429,15 +446,9 @@ fun String.tryInt(def: Int): Int {
         }
         return this.toInt()
     } catch (e: Throwable) {
+        e.printStackTrace()
     }
     return def
-}
-
-/**
- * 以一个View为res来源获取指定id的颜色值
- */
-fun View.getColor(id: Int): Int {
-    return ContextCompat.getColor(this.context, id)
 }
 
 /**
@@ -454,32 +465,6 @@ fun Int.range(min: Int, max: Int): Int {
 }
 
 /**
- * 从Context中尝试通过名字获取一个drawable的id
- */
-fun Context.findDrawableId(name: String): Int {
-    var icon = findId(name, "drawable")
-    if (icon != 0) {
-        return icon
-    }
-    icon = findId(name, "mipmap")
-    return icon
-}
-
-/**
- * 从Context中尝试通过名字获取一个指定类型的资源id
- */
-fun Context.findId(name: String, type: String): Int {
-    return resources.getIdentifier(name, type, packageName)
-}
-
-/**
- * 尝试通过一个id获取对应的资源名
- */
-fun Context.findName(id: Int): String {
-    return resources.getResourceName(id)
-}
-
-/**
  * 从context中获取当前应用的版本名称
  */
 fun Context.versionName(): String {
@@ -491,7 +476,7 @@ fun Context.versionName(): String {
  */
 fun Context.versionCode(): Long {
     val packageInfo = packageManager.getPackageInfo(packageName, 0)
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+    versionThen(Build.VERSION_CODES.P) {
         return packageInfo.longVersionCode
     }
     return packageInfo.versionCode.toLong()
@@ -532,85 +517,100 @@ fun String.writeTo(file: File) {
     }
 }
 
-fun View.setMargin(run: (ViewGroup.MarginLayoutParams) -> Unit) {
-    val lp = this.layoutParams
-    if (lp is ViewGroup.MarginLayoutParams) {
-        run(lp)
-        this.layoutParams = lp
-    }
+fun interface SimpleViewClickCallback<V : View> {
+    fun onClick(v: V)
 }
 
-inline fun <reified T : ViewBinding> Activity.lazyBind(): Lazy<T> = lazy { bind() }
-
-inline fun <reified T : ViewBinding> Fragment.lazyBind(): Lazy<T> = lazy { bind() }
-
-inline fun <reified T : ViewBinding> View.lazyBind(): Lazy<T> = lazy { bind() }
-
-inline fun <reified T : ViewBinding> Activity.bind(): T {
-    return this.layoutInflater.bind()
+inline fun <reified T : View> T.onClick(
+    interval: Long = 300,
+    callback: SimpleViewClickCallback<T>
+) {
+    setOnClickListener(SimpleIntervalClickListener(interval, this, callback))
 }
 
-inline fun <reified T : ViewBinding> Fragment.bind(): T {
-    return this.layoutInflater.bind()
-}
+class SimpleIntervalClickListener<V : View>(
+    private val interval: Long = 0,
+    target: V,
+    private val callback: SimpleViewClickCallback<V>
+) : View.OnClickListener {
 
-inline fun <reified T : ViewBinding> View.bind(): T {
-    return LayoutInflater.from(this.context).bind()
-}
+    private var lastClickTime = 0L
+    private val targetView = WeakReference(target)
 
-inline fun <reified T : ViewBinding> LayoutInflater.bind(): T {
-    val layoutInflater: LayoutInflater = this
-    val bindingClass = T::class.java
-    val inflateMethod = bindingClass.getMethod("inflate", LayoutInflater::class.java)
-    val invokeObj = inflateMethod.invoke(null, layoutInflater)
-    if (invokeObj is T) {
-        return invokeObj
-    }
-    throw InflateException("Cant inflate ViewBinding ${bindingClass.name}")
-}
-
-inline fun <reified T : ViewBinding> View.withThis(inflate: Boolean = false): Lazy<T> = lazy {
-    val bindingClass = T::class.java
-    val view: View = this
-    if (view is ViewGroup && inflate) {
-        val bindMethod = bindingClass.getMethod(
-            "inflate",
-            LayoutInflater::class.java,
-            ViewGroup::class.java,
-            Boolean::class.javaPrimitiveType
-        )
-        val bindObj = bindMethod.invoke(null, LayoutInflater.from(context), view, true)
-        if (bindObj is T) {
-            return@lazy bindObj
+    override fun onClick(v: View?) {
+        val target = targetView.get() ?: return
+        if (target != v) {
+            return
         }
-    } else {
-        val bindMethod = bindingClass.getMethod(
-            "bind",
-            View::class.java
-        )
-        val bindObj = bindMethod.invoke(null, view)
-        if (bindObj is T) {
-            return@lazy bindObj
+        val now = System.currentTimeMillis()
+        if (interval < 0 || now - lastClickTime > interval) {
+            lastClickTime = now
+            callback.onClick(target)
         }
     }
-    throw InflateException("Cant inflate ViewBinding ${bindingClass.name}")
+
 }
 
-inline fun <reified T: View> T.changeLayoutParams(matchWidth: Boolean, matchHeight: Boolean): T {
-    val params = layoutParams ?: ViewGroup.LayoutParams(
-        ViewGroup.LayoutParams.WRAP_CONTENT,
-        ViewGroup.LayoutParams.WRAP_CONTENT)
-    if (matchWidth) {
-        params.width = ViewGroup.LayoutParams.MATCH_PARENT
+fun Int.smallerThen(o: Int): Int {
+    if (this > o) {
+        return o
     }
-    if (matchHeight) {
-        params.height = ViewGroup.LayoutParams.MATCH_PARENT
-    }
-    layoutParams = params
     return this
 }
 
-inline fun <reified T: ViewBinding> T.changeLayoutParams(matchWidth: Boolean, matchHeight: Boolean): T {
-    this.root.changeLayoutParams(matchWidth, matchHeight)
+fun Int.biggerThen(o: Int): Int {
+    if (this < o) {
+        return o
+    }
     return this
 }
+
+@ChecksSdkIntAtLeast(parameter = 0, lambda = 1)
+inline fun versionThen(target: Int, callback: () -> Unit) {
+    if (Build.VERSION.SDK_INT >= target) {
+        callback()
+    }
+}
+
+fun View.setEmptyClick() {
+    onClick { }
+}
+
+@SuppressLint("ClickableViewAccessibility")
+fun View.setEmptyTouch() {
+    setOnTouchListener { _, _ -> true }
+}
+
+/**
+ * 是否已经被销毁
+ */
+fun LifecycleOwner.isDestroyed() = lifecycle.currentState.isAtLeast(Lifecycle.State.DESTROYED)
+
+/**
+ * 是否已经被创建
+ */
+fun LifecycleOwner.isCreated() = lifecycle.currentState.isAtLeast(Lifecycle.State.CREATED)
+
+/**
+ * 是否已经被初始化
+ */
+fun LifecycleOwner.isInitialized() = lifecycle.currentState.isAtLeast(Lifecycle.State.INITIALIZED)
+
+/**
+ * 是否已经开始运行
+ */
+fun LifecycleOwner.isStarted() = lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
+
+/**
+ * 是否已经可见
+ */
+fun LifecycleOwner.isResumed() = lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
+
+inline fun <reified T : Any> tryUse(info: T?, callback: (T) -> Unit) {
+    info?.let(callback)
+}
+
+inline fun <reified T : Any> tryWith(info: T?, callback: T.() -> Unit) {
+    info?.apply(callback)
+}
+

@@ -28,4 +28,5 @@
     <string name="import_done">已导入</string>
     <string name="hint_title_permission">提示</string>
     <string name="hint_message_permission">您好，本软件只针对Android原生标准API做了适配。\n如果您使用的是ColorOS、MIUI、FuntouchOS、OneUI、OriginOS、JoyUI、FlymeOS、SmartisanOS等深度定制的Android系统，\n或是对Android兼容的HarmonyOS、BlackBerryOS、AliOS等自主研发系统。\n那么请手动检查应用等通知权限与悬浮窗权限是否打开。\n如果关闭了通知权限，那么您可能看不到一些必要的提示信息（本软件承诺不包含任何形式的广告）。\n如果关闭了悬浮窗权限，那么您将不能使用本软件的悬浮窗时间显示功能，这可能将会对您的使用造成困扰。</string>
+    <string name="hint_notification_disable">您未打开通知，可能错过错误提示</string>
 </resources>

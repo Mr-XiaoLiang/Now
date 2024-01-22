@@ -3,11 +3,10 @@ package com.lollipop.now.ui
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
+import com.lollipop.base.util.bind
 import com.lollipop.now.R
 import com.lollipop.now.data.SiteInfo
 import com.lollipop.now.databinding.ItemWebSiteBinding
-import com.lollipop.now.util.bind
-import com.lollipop.now.util.changeLayoutParams
 
 /**
  * @author lollipop
@@ -17,15 +16,18 @@ import com.lollipop.now.util.changeLayoutParams
 class ImportSiteHolder
 private constructor(
     private val viewBinding: ItemWebSiteBinding,
-    private val onClick: (ImportSiteHolder) -> Unit): RecyclerView.ViewHolder(viewBinding.root) {
+    private val onClick: (ImportSiteHolder) -> Unit
+) : RecyclerView.ViewHolder(viewBinding.root) {
 
     companion object {
-        fun create(group: ViewGroup,
-                   onClick: (ImportSiteHolder) -> Unit): ImportSiteHolder {
+        fun create(
+            group: ViewGroup,
+            onClick: (ImportSiteHolder) -> Unit
+        ): ImportSiteHolder {
             return ImportSiteHolder(
-                group.bind<ItemWebSiteBinding>()
-                    .changeLayoutParams(matchWidth = true, matchHeight = false),
-                onClick)
+                group.bind(attach = false),
+                onClick
+            )
         }
     }
 
@@ -43,7 +45,13 @@ private constructor(
         viewBinding.titleView.text = info.name
         viewBinding.urlView.text = info.url
 
-        itemView.setBackgroundColor(if (isSelect) { selectedColor } else { unselectedColor })
+        itemView.setBackgroundColor(
+            if (isSelect) {
+                selectedColor
+            } else {
+                unselectedColor
+            }
+        )
     }
 
 }

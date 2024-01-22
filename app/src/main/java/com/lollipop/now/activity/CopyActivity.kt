@@ -1,5 +1,6 @@
 package com.lollipop.now.activity
 
+import android.annotation.SuppressLint
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -9,17 +10,26 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.lollipop.base.util.doAsync
+import com.lollipop.base.util.insets.WindowInsetsEdge
+import com.lollipop.base.util.insets.WindowInsetsHelper
+import com.lollipop.base.util.insets.fixInsetsByPadding
+import com.lollipop.base.util.lazyBind
+import com.lollipop.base.util.onUI
 import com.lollipop.now.R
 import com.lollipop.now.data.SiteHelper
 import com.lollipop.now.data.SiteInfo
 import com.lollipop.now.databinding.ActivityCopyBinding
 import com.lollipop.now.ui.ImportSiteAdapter
-import com.lollipop.now.util.*
+import com.lollipop.now.util.lifecycleBinding
+import com.lollipop.now.util.onEnd
+import com.lollipop.now.util.onStart
 
 
-class CopyActivity : BaseActivity() {
+class CopyActivity : AppCompatActivity() {
 
     private val siteList = ArrayList<SiteInfo>()
     private val selectedList = ArrayList<SiteInfo>()
@@ -33,8 +43,9 @@ class CopyActivity : BaseActivity() {
         setContentView(binding.root)
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        initWindowFlag()
-        initRootGroup(binding.rootGroup)
+        WindowInsetsHelper.fitsSystemWindows(this)
+        binding.appBarLayout.fixInsetsByPadding(WindowInsetsEdge.HEADER)
+        binding.rootGroup.fixInsetsByPadding(WindowInsetsEdge.BOTTOM)
         initView()
         siteHelper.onSync {
             if (it) {
@@ -56,12 +67,13 @@ class CopyActivity : BaseActivity() {
             return true
         }
         if (item.itemId == android.R.id.home) {
-            onBackPressed()
+            onBackPressedDispatcher.onBackPressed()
             return true
         }
         return super.onOptionsItemSelected(item)
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     private fun initView() {
         binding.defaultBtn.setOnClickListener {
             binding.siteInputText.setText(SiteHelper.readDefaultInfo(this))
@@ -155,6 +167,7 @@ class CopyActivity : BaseActivity() {
         Toast.makeText(this, R.string.import_done, Toast.LENGTH_SHORT).show()
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     private fun onSiteUpdate(isAnimation: Boolean = true) {
         siteAdapter.notifyDataSetChanged()
         if (!isAnimation) {
@@ -207,11 +220,6 @@ class CopyActivity : BaseActivity() {
         onSelectedSiteChange()
     }
 
-    override fun onWindowInsetsChange(left: Int, top: Int, right: Int, bottom: Int) {
-        super.onWindowInsetsChange(left, top, right, bottom)
-        binding.appBarLayout.setPadding(left, top, right, 0)
-        binding.rootGroup.setPadding(0, 0, 0, bottom)
-    }
 
     override fun onDestroy() {
         super.onDestroy()

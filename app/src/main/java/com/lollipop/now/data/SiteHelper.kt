@@ -4,20 +4,17 @@ import android.content.Context
 import android.text.TextUtils
 import android.util.Base64
 import android.util.SparseArray
-import androidx.core.util.set
-import com.lollipop.now.util.CommonUtil
+import com.lollipop.base.util.doAsync
+import com.lollipop.base.util.onUI
+import com.lollipop.base.util.task
 import com.lollipop.now.util.SharedPreferencesUtils.get
 import com.lollipop.now.util.SharedPreferencesUtils.set
-import com.lollipop.now.util.createTask
-import com.lollipop.now.util.doAsync
-import com.lollipop.now.util.onUI
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
-import java.util.*
-import kotlin.collections.ArrayList
+import java.util.Collections
 
 /**
  * @author lollipop
@@ -50,13 +47,19 @@ class SiteHelper {
         private val EMPTY_OFFSET = OffsetInfo("", "", 0L)
 
         private fun encode(value: String): String {
-            return Base64.encodeToString(value.toByteArray(Charsets.UTF_8),
-                Base64.NO_PADDING or Base64.NO_WRAP or Base64.URL_SAFE)
+            return Base64.encodeToString(
+                value.toByteArray(Charsets.UTF_8),
+                Base64.NO_PADDING or Base64.NO_WRAP or Base64.URL_SAFE
+            )
         }
 
         private fun decode(value: String): String {
-            return String(Base64.decode(value,
-                Base64.NO_PADDING or Base64.NO_WRAP or Base64.URL_SAFE))
+            return String(
+                Base64.decode(
+                    value,
+                    Base64.NO_PADDING or Base64.NO_WRAP or Base64.URL_SAFE
+                )
+            )
         }
 
         fun enableNetDelay(context: Context, isEnable: Boolean) {
@@ -98,8 +101,8 @@ class SiteHelper {
             val jsonArray = JSONArray(decode(value))
             for (index in 0 until jsonArray.length()) {
                 val obj = jsonArray.optJSONObject(index) ?: continue
-                val name = obj.optString(KEY_NAME)?:""
-                val site = obj.optString(KEY_SITE)?:""
+                val name = obj.optString(KEY_NAME) ?: ""
+                val site = obj.optString(KEY_SITE) ?: ""
                 list.add(SiteInfo(name, site))
             }
         }
@@ -140,9 +143,9 @@ class SiteHelper {
 
     private var onSyncCallback: ((Boolean) -> Unit)? = null
 
-    private val applyChangeTask = createTask {
+    private val applyChangeTask = task {
         if (applyLock) {
-            return@createTask
+            return@task
         }
         applyLock = true
         onSyncCallback?.invoke(true)
@@ -176,7 +179,7 @@ class SiteHelper {
         }
     }
 
-    private val netSyncTask = createTask {
+    private val netSyncTask = task {
         onUI {
             onSyncCallback?.invoke(true)
         }
@@ -187,7 +190,7 @@ class SiteHelper {
         syncTempList.addAll(siteList)
         for (index in syncTempList.indices) {
             if (isDestroy) {
-                return@createTask
+                return@task
             }
             val site = syncTempList[index]
             name = site.name
@@ -252,7 +255,7 @@ class SiteHelper {
         if (siteList.isEmpty() || index < 0 || index >= siteList.size) {
             return EMPTY_OFFSET
         }
-        return offsetList[index]?:EMPTY_OFFSET
+        return offsetList[index] ?: EMPTY_OFFSET
     }
 
     fun read(context: Context) {
@@ -331,8 +334,8 @@ class SiteHelper {
 
     private fun applyChange() {
         if (!applyLock) {
-            CommonUtil.remove(applyChangeTask)
-            CommonUtil.delay(APPLY_DELAY, applyChangeTask)
+            applyChangeTask.cancel()
+            applyChangeTask.delay(APPLY_DELAY)
         } else {
             pendingSync = true
         }
@@ -343,13 +346,13 @@ class SiteHelper {
         offsetList.clear()
     }
 
-    fun sync() {
-        CommonUtil.doAsync(netSyncTask)
+    fun async() {
+        netSyncTask.run()
     }
 
     fun destroy() {
         context = null
-        CommonUtil.remove(applyChangeTask)
+        applyChangeTask.cancel()
         applyLock = true
     }
 

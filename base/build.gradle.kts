@@ -1,23 +1,21 @@
 plugins {
-    id("com.android.application")
+    id("com.android.library")
     id("org.jetbrains.kotlin.android")
 }
 
 android {
-    namespace = "com.lollipop.now"
+    namespace = "com.lollipop.base"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.lollipop.now"
         minSdk = 26
-        targetSdk = 34
-        versionCode = 3
-        versionName = "1.6"
+
+        consumerProguardFiles("consumer-rules.pro")
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = true
+            isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -37,9 +35,8 @@ android {
 }
 
 dependencies {
+//    implementation(libs.kotlin.stdlib)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
-    implementation(libs.androidx.constraintlayout)
-    implementation(project(path = ":base"))
 }
